@@ -1,65 +1,91 @@
-﻿public abstract class Client
+﻿using System;
+
+abstract class Client
 {
-    public string Name { get; set; }
+    public string Username { get; set; }
     public string Email { get; set; }
-    public int Age { get; set; }
-    public bool AccessDisabled { get; set; }
+    public string Description { get; protected set; }
 
-    protected IAccessHandler _accessHandler;
-
-    public virtual bool HandleAccess()
+    public virtual string GetDescription()
     {
-        return _accessHandler.GetAccess(accessDisabled:AccessDisabled);
+        return Description;
+    }
+
+    public virtual string GetBadges()
+    {
+        return ""; 
     }
 }
 
-public class User : Client
+
+class User : Client
 {
-    public User() 
+    public User()
     {
-        _accessHandler = new HasReputation();
-    }   
-
-    public int Reputation { get; set; }
-
-    public override bool HandleAccess()
-    {
-        return _accessHandler.GetAccess(repuation: Reputation);
+        Description = "Base-level User";
     }
 }
 
-public class Manager : Client
+
+abstract class BadgeDecorator : Client
 {
-    public Manager()
+    protected Client decoratedClient;
+
+    public BadgeDecorator(Client client)
     {
-        _accessHandler = new HasAccessAutomatic();
+        decoratedClient = client;
+    }
+
+    public override string GetBadges()
+    {
+        return decoratedClient.GetBadges();
     }
 }
 
-public class Admin : Client
+
+class SilverBadgeDecorator : BadgeDecorator
 {
-    public Admin()
+    public SilverBadgeDecorator(Client client) : base(client) { }
+
+    public override string GetBadges()
     {
-        _accessHandler = new HasAccessAutomatic();
+        return decoratedClient.GetBadges() + " Silver Badge";
+    }
+
+    public override string GetDescription()
+    {
+        return decoratedClient.GetDescription();
     }
 }
 
-public interface IAccessHandler
+class GoldBadgeDecorator : BadgeDecorator
 {
-    public bool GetAccess(int? repuation = 0, bool accessDisabled = false);
-}
-public class HasReputation : IAccessHandler
-{
-    public bool GetAccess(int? repuation = 0, bool accessDisabled = false)
+    public GoldBadgeDecorator(Client client) : base(client) { }
+
+    public override string GetBadges()
     {
-        return repuation > 20;
+        return decoratedClient.GetBadges() + " Gold Badge";
+    }
+
+    public override string GetDescription()
+    {
+        return decoratedClient.GetDescription();
     }
 }
 
-public class HasAccessAutomatic : IAccessHandler
+class Program
 {
-    public bool GetAccess(int? repuation = 0, bool accessDisabled = false)
+    static void Main(string[] args)
     {
-        return !accessDisabled;
+        User user = new User();
+        Console.WriteLine("User Description: " + user.GetDescription());
+
+        SilverBadgeDecorator silverBadgeUser = new SilverBadgeDecorator(user);
+        Console.WriteLine("User Description with Silver Badge: " + silverBadgeUser.GetDescription());
+        Console.WriteLine("Badges: " + silverBadgeUser.GetBadges());
+
+        GoldBadgeDecorator goldBadgeUser = new GoldBadgeDecorator(user);
+        Console.WriteLine("User Description with Gold Badge: " + goldBadgeUser.GetDescription());
+        Console.WriteLine("Badges: " + goldBadgeUser.GetBadges());
     }
 }
