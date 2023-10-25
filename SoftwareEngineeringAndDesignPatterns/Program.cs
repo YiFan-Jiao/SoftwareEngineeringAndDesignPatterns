@@ -1,91 +1,63 @@
 ﻿using System;
 
-abstract class Client
+public class User
 {
-    public string Username { get; set; }
-    public string Email { get; set; }
-    public string Description { get; protected set; }
-
-    public virtual string GetDescription()
+    public string Password { get; set; }
+    public virtual void PasswordHash()
     {
-        return Description;
-    }
-
-    public virtual string GetBadges()
-    {
-        return ""; 
+       
     }
 }
 
-
-class User : Client
+public class AuthorizedUser : User
 {
-    public User()
+    public bool IsAdmin { get; set; }
+    public AuthorizedUser(bool isAdmin)
     {
-        Description = "Base-level User";
+        IsAdmin = isAdmin;
     }
 }
 
-
-abstract class BadgeDecorator : Client
+public class UserFactory
 {
-    protected Client decoratedClient;
-
-    public BadgeDecorator(Client client)
+    public static User CreateUser(bool twoFactorRequired, bool isAdmin = false)
     {
-        decoratedClient = client;
+        if (twoFactorRequired)
+        {
+            if (CheckTwoFactorAuthentication())
+            {
+                return new AuthorizedUser(isAdmin);
+            }
+            else
+            {
+                throw new Exception("TwoFactorAuthentication is not valid.");
+            }
+        }
+        else
+        {
+            return new AuthorizedUser(isAdmin);
+        }
     }
 
-    public override string GetBadges()
+    private static bool CheckTwoFactorAuthentication()
     {
-        return decoratedClient.GetBadges();
+        // if else return true or false
+        
+        return true; 
     }
 }
 
-
-class SilverBadgeDecorator : BadgeDecorator
+public class Program
 {
-    public SilverBadgeDecorator(Client client) : base(client) { }
-
-    public override string GetBadges()
+    public static void Main()
     {
-        return decoratedClient.GetBadges() + " Silver Badge";
-    }
-
-    public override string GetDescription()
-    {
-        return decoratedClient.GetDescription();
-    }
-}
-
-class GoldBadgeDecorator : BadgeDecorator
-{
-    public GoldBadgeDecorator(Client client) : base(client) { }
-
-    public override string GetBadges()
-    {
-        return decoratedClient.GetBadges() + " Gold Badge";
-    }
-
-    public override string GetDescription()
-    {
-        return decoratedClient.GetDescription();
-    }
-}
-
-class Program
-{
-    static void Main(string[] args)
-    {
-        User user = new User();
-        Console.WriteLine("User Description: " + user.GetDescription());
-
-        SilverBadgeDecorator silverBadgeUser = new SilverBadgeDecorator(user);
-        Console.WriteLine("User Description with Silver Badge: " + silverBadgeUser.GetDescription());
-        Console.WriteLine("Badges: " + silverBadgeUser.GetBadges());
-
-        GoldBadgeDecorator goldBadgeUser = new GoldBadgeDecorator(user);
-        Console.WriteLine("User Description with Gold Badge: " + goldBadgeUser.GetDescription());
-        Console.WriteLine("Badges: " + goldBadgeUser.GetBadges());
+        try
+        {
+            User user1 = UserFactory.CreateUser(true, true); 
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Exception: " + ex.Message);
+        }
     }
 }
